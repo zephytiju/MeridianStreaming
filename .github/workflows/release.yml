@@ -1,0 +1,128 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Reproducible build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out immutable tag
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install release tooling
+        run: python -m pip install --disable-pip-version-check -e '.[test]'
+      - name: Run complete release gate
+        run: |
+          ruff format --check src tests scripts
+          ruff check src tests scripts
+          python -m mypy src
+          python scripts/verify_contracts.py
+          python scripts/verify_release_tag.py "${GITHUB_REF_NAME}"
+          python scripts/verify_boundaries.py
+          pytest --cov=meridian_storage.streaming --cov-report=term-missing
+          bandit -c pyproject.toml -r src
+          pip-audit --require-hashes -r requirements-audit.txt
+      - name: Build twice
+        env:
+          SOURCE_DATE_EPOCH: "1787659200"
+        run: |
+          python -m build --outdir dist/packages
+          python -m build --outdir dist-second
+          cmp dist/packages/meridian_storage_streaming-1.0.0-py3-none-any.whl dist-second/meridian_storage_streaming-1.0.0-py3-none-any.whl
+          cmp dist/packages/meridian_storage_streaming-1.0.0.tar.gz dist-second/meridian_storage_streaming-1.0.0.tar.gz
+      - name: Verify artifacts and create evidence
+        run: |
+          python scripts/verify_artifacts.py dist/packages/*
+          python scripts/generate_conformance_evidence.py --output dist/evidence/conformance-report.json
+          python scripts/generate_sbom.py --output dist/evidence/meridian-storage-streaming-1.0.0.spdx.json
+          sha256sum dist/packages/* > dist/evidence/SHA256SUMS
+      - name: Upload immutable release bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-bundle
+          path: dist/**
+          if-no-files-found: error
+
+  attest:
+    name: Attest release artifacts
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Download release bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-bundle
+          path: dist
+      - name: Attest wheel and source distribution provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            dist/packages/*.whl
+            dist/packages/*.tar.gz
+      - name: Attest release SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            dist/packages/*.whl
+            dist/packages/*.tar.gz
+          sbom-path: dist/evidence/meridian-storage-streaming-1.0.0.spdx.json
+
+  publish:
+    name: Publish to PyPI
+    needs: [build, attest]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/meridian-storage-streaming
+    permissions:
+      id-token: write
+    steps:
+      - name: Download release bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-bundle
+          path: dist
+      - name: Publish with trusted provenance
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: dist/packages
+
+  github-release:
+    name: Create GitHub Release
+    needs: [build, attest, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-bundle
+          path: dist
+      - name: Create immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          dist/packages/*
+          dist/evidence/*
+          --generate-notes
+          --verify-tag

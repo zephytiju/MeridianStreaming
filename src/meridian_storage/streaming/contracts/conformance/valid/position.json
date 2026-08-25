@@ -1,0 +1,6 @@
+{
+  "formatVersion": "meridian.streaming.position.v1",
+  "value": "opaque-position",
+  "resource": {"catalog": "streaming", "namespace": "orders", "name": "events"},
+  "logicalPartition": "orders-1"
+}

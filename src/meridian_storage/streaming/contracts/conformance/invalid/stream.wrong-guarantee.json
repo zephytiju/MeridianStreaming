@@ -1,0 +1,17 @@
+{
+  "formatVersion": "meridian.streaming.resource.v1",
+  "kind": "stream",
+  "ref": {"catalog": "streaming", "namespace": "orders", "name": "events"},
+  "schema": {"catalog": "streaming", "namespace": "orders", "name": "event", "version": "1.0.0"},
+  "logicalPartitions": 4,
+  "partitionKeyFields": ["order_id"],
+  "deliveryGuarantee": "best-effort",
+  "orderingGuarantee": "global",
+  "retentionPolicyRef": "standard",
+  "policy": {
+    "requiredScope": ["tenant"],
+    "policyRef": null,
+    "evidence": {"audit": true, "lineage": true, "telemetry": true},
+    "extensions": {}
+  }
+}

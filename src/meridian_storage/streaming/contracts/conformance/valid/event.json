@@ -1,0 +1,13 @@
+{
+  "formatVersion": "meridian.streaming.event.v1",
+  "eventId": "event-001",
+  "stream": {"catalog": "streaming", "namespace": "orders", "name": "events"},
+  "schema": {"catalog": "streaming", "namespace": "orders", "name": "event", "version": "1.0.0"},
+  "data": {"order_id": "order-001", "state": "accepted"},
+  "occurredAt": "2026-08-25T12:00:00.000000Z",
+  "producedAt": "2026-08-25T12:00:00.000001Z",
+  "logicalPartitionKey": "order-001",
+  "headers": {"content-type": "application/json"},
+  "traceContext": {"traceparent": "00-00000000000000000000000000000001-0000000000000001-01"},
+  "extensions": {}
+}

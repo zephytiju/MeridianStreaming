@@ -1,0 +1,6 @@
+{
+  "formatVersion": "meridian.streaming.cursor.v1",
+  "value": "opaque-example-token",
+  "resource": {"catalog": "streaming", "namespace": "orders", "name": "events"},
+  "expiresAt": "2027-08-25T12:00:00.000000Z"
+}

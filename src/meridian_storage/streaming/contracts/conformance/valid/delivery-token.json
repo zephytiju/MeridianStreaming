@@ -1,0 +1,7 @@
+{
+  "formatVersion": "meridian.streaming.delivery-token.v1",
+  "value": "opaque-delivery",
+  "subscription": {"catalog": "streaming", "namespace": "orders", "name": "subscription"},
+  "consumerGroup": {"catalog": "streaming", "namespace": "orders", "name": "workers"},
+  "expiresAt": "2026-08-25T13:00:00Z"
+}

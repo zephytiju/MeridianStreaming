@@ -1,0 +1,139 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0",
+  "$id": "https://github.com/zephytiju/MeridianStreaming/contracts/meridian.streaming.data.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Meridian V1 Streaming Data",
+  "oneOf": [
+    { "$ref": "#/$defs/cursor" },
+    { "$ref": "#/$defs/position" },
+    { "$ref": "#/$defs/deliveryToken" },
+    { "$ref": "#/$defs/event" },
+    { "$ref": "#/$defs/delivery" },
+    { "$ref": "#/$defs/publishReceipt" },
+    { "$ref": "#/$defs/rangePage" }
+  ],
+  "$defs": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "opaque": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "timestamp": { "type": ["string", "null"], "format": "date-time" },
+    "resourceRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["catalog", "namespace", "name"],
+      "properties": {
+        "catalog": { "const": "streaming" },
+        "namespace": { "$ref": "#/$defs/name" },
+        "name": { "$ref": "#/$defs/name" }
+      }
+    },
+    "schemaRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["catalog", "namespace", "name", "version"],
+      "properties": {
+        "catalog": { "const": "streaming" },
+        "namespace": { "$ref": "#/$defs/name" },
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "$ref": "#/$defs/name" }
+      }
+    },
+    "cursor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["formatVersion", "value", "resource", "expiresAt"],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.cursor.v1" },
+        "value": { "$ref": "#/$defs/opaque" },
+        "resource": { "$ref": "#/$defs/resourceRef" },
+        "expiresAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "position": {
+      "type": "object", "additionalProperties": false,
+      "required": ["formatVersion", "value", "resource", "logicalPartition"],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.position.v1" },
+        "value": { "$ref": "#/$defs/opaque" },
+        "resource": { "$ref": "#/$defs/resourceRef" },
+        "logicalPartition": { "type": ["string", "null"], "maxLength": 512 }
+      }
+    },
+    "deliveryToken": {
+      "type": "object", "additionalProperties": false,
+      "required": ["formatVersion", "value", "subscription", "consumerGroup", "expiresAt"],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.delivery-token.v1" },
+        "value": { "$ref": "#/$defs/opaque" },
+        "subscription": { "$ref": "#/$defs/resourceRef" },
+        "consumerGroup": { "$ref": "#/$defs/resourceRef" },
+        "expiresAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "event": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "formatVersion", "eventId", "stream", "schema", "data", "occurredAt",
+        "producedAt", "logicalPartitionKey", "headers", "traceContext", "extensions"
+      ],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.event.v1" },
+        "eventId": { "$ref": "#/$defs/name" },
+        "stream": { "$ref": "#/$defs/resourceRef" },
+        "schema": { "$ref": "#/$defs/schemaRef" },
+        "data": { "type": "object" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "producedAt": { "type": "string", "format": "date-time" },
+        "logicalPartitionKey": { "type": ["string", "null"], "maxLength": 1024 },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "traceContext": { "type": "object", "additionalProperties": { "type": "string" } },
+        "extensions": { "type": "object" }
+      }
+    },
+    "delivery": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "formatVersion", "event", "delivery", "position", "attempt", "redelivered",
+        "receivedAt", "acknowledgementDeadline"
+      ],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.delivery.v1" },
+        "event": { "$ref": "#/$defs/event" },
+        "delivery": { "$ref": "#/$defs/deliveryToken" },
+        "position": { "$ref": "#/$defs/position" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "redelivered": { "type": "boolean" },
+        "receivedAt": { "type": "string", "format": "date-time" },
+        "acknowledgementDeadline": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "publishReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["eventId", "position", "cursor", "acceptedAt", "effectiveGuarantee"],
+      "properties": {
+        "eventId": { "$ref": "#/$defs/name" },
+        "position": {
+          "oneOf": [{ "$ref": "#/$defs/position" }, { "type": "null" }]
+        },
+        "cursor": {
+          "oneOf": [{ "$ref": "#/$defs/cursor" }, { "type": "null" }]
+        },
+        "acceptedAt": { "type": "string", "format": "date-time" },
+        "effectiveGuarantee": { "const": "at-least-once" }
+      },
+      "anyOf": [
+        { "properties": { "position": { "$ref": "#/$defs/position" } } },
+        { "properties": { "cursor": { "$ref": "#/$defs/cursor" } } }
+      ]
+    },
+    "rangePage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["events", "nextCursor", "truncated"],
+      "properties": {
+        "events": {
+          "type": "array", "items": { "$ref": "#/$defs/event" }
+        },
+        "nextCursor": {
+          "oneOf": [{ "$ref": "#/$defs/cursor" }, { "type": "null" }]
+        },
+        "truncated": { "type": "boolean" }
+      }
+    }
+  }
+}

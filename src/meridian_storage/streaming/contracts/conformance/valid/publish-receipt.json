@@ -1,0 +1,12 @@
+{
+  "eventId": "event-1",
+  "position": {
+    "formatVersion": "meridian.streaming.position.v1",
+    "value": "opaque-position",
+    "resource": {"catalog": "streaming", "namespace": "orders", "name": "events"},
+    "logicalPartition": "orders-1"
+  },
+  "cursor": null,
+  "acceptedAt": "2026-08-25T12:00:01Z",
+  "effectiveGuarantee": "at-least-once"
+}
