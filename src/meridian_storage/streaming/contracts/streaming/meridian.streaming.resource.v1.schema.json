@@ -1,0 +1,116 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0",
+  "$id": "https://github.com/zephytiju/MeridianStreaming/contracts/meridian.streaming.resource.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Meridian V1 Streaming Resource",
+  "oneOf": [
+    { "$ref": "#/$defs/stream" },
+    { "$ref": "#/$defs/subscription" },
+    { "$ref": "#/$defs/consumerGroup" }
+  ],
+  "$defs": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "resourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog", "namespace", "name"],
+      "properties": {
+        "catalog": { "const": "streaming" },
+        "namespace": { "$ref": "#/$defs/name" },
+        "name": { "$ref": "#/$defs/name" }
+      }
+    },
+    "schemaRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog", "namespace", "name", "version"],
+      "properties": {
+        "catalog": { "const": "streaming" },
+        "namespace": { "$ref": "#/$defs/name" },
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "$ref": "#/$defs/name" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredScope", "policyRef", "evidence", "extensions"],
+      "properties": {
+        "requiredScope": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/name" }
+        },
+        "policyRef": { "type": ["string", "null"], "maxLength": 512 },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["audit", "lineage", "telemetry"],
+          "properties": {
+            "audit": { "type": "boolean" },
+            "lineage": { "type": "boolean" },
+            "telemetry": { "type": "boolean" }
+          }
+        },
+        "extensions": { "type": "object" }
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formatVersion", "kind", "ref", "schema", "logicalPartitions",
+        "partitionKeyFields", "deliveryGuarantee", "orderingGuarantee",
+        "retentionPolicyRef", "policy"
+      ],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.resource.v1" },
+        "kind": { "const": "stream" },
+        "ref": { "$ref": "#/$defs/resourceRef" },
+        "schema": { "$ref": "#/$defs/schemaRef" },
+        "logicalPartitions": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "partitionKeyFields": {
+          "type": "array", "uniqueItems": true,
+          "items": { "$ref": "#/$defs/name" }
+        },
+        "deliveryGuarantee": { "const": "at-least-once" },
+        "orderingGuarantee": { "const": "per-logical-partition" },
+        "retentionPolicyRef": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "policy": { "$ref": "#/$defs/policy" }
+      }
+    },
+    "subscription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formatVersion", "kind", "ref", "stream", "filter",
+        "acknowledgementTimeoutMs", "maxDeliveryAttempts", "deadLetterStream", "policy"
+      ],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.resource.v1" },
+        "kind": { "const": "subscription" },
+        "ref": { "$ref": "#/$defs/resourceRef" },
+        "stream": { "$ref": "#/$defs/resourceRef" },
+        "filter": { "type": "object" },
+        "acknowledgementTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 86400000 },
+        "maxDeliveryAttempts": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "deadLetterStream": {
+          "oneOf": [{ "$ref": "#/$defs/resourceRef" }, { "type": "null" }]
+        },
+        "policy": { "$ref": "#/$defs/policy" }
+      }
+    },
+    "consumerGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formatVersion", "kind", "ref", "subscription", "policy"],
+      "properties": {
+        "formatVersion": { "const": "meridian.streaming.resource.v1" },
+        "kind": { "const": "consumer-group" },
+        "ref": { "$ref": "#/$defs/resourceRef" },
+        "subscription": { "$ref": "#/$defs/resourceRef" },
+        "policy": { "$ref": "#/$defs/policy" }
+      }
+    }
+  }
+}

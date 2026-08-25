@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: Apache-2.0
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meridian-storage-streaming"
+version = "1.0.0"
+description = "Provider-neutral Meridian V1 Streaming Catalog contracts and conformance suite"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Meridian contributors" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
+keywords = ["meridian", "streaming", "catalog", "event", "provider-neutral"]
+dependencies = [
+  "meridian-storage-core==1.0.0",
+  "meridian-storage-semantics==1.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "bandit[toml]==1.8.6",
+  "build==1.3.0",
+  "hatchling==1.27.0",
+  "jsonschema==4.25.1",
+  "mypy==1.17.1",
+  "pip-audit==2.9.0",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1",
+  "ruff==0.12.11",
+]
+
+[project.urls]
+Documentation = "https://github.com/zephytiju/MeridianStreaming#readme"
+Issues = "https://github.com/zephytiju/MeridianStreaming/issues"
+Repository = "https://github.com/zephytiju/MeridianStreaming"
+
+[project.entry-points."meridian_storage.catalogs"]
+streaming = "meridian_storage.streaming.catalog:StreamingCatalogProvider"
+
+[tool.hatch.build]
+dev-mode-dirs = ["src"]
+include = [
+  "src/meridian_storage/streaming/**/*.py",
+  "src/meridian_storage/streaming/**/*.json",
+  "src/meridian_storage/streaming/py.typed",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meridian_storage"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+markers = [
+  "contract: serialized-contract verification",
+  "conformance: reusable provider conformance verification",
+  "lifecycle: lifecycle and recovery verification",
+  "packaging: distribution-boundary verification",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["meridian_storage.streaming"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["dist", "build"]
+
+[tool.ruff.lint]
+select = ["A", "B", "C4", "E", "F", "I", "N", "PERF", "PIE", "PL", "RUF", "S", "SIM", "UP"]
+ignore = ["PLR0913"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "PLR2004"]
+"src/meridian_storage/streaming/testing/**/*.py" = ["S101"]
+"src/meridian_storage/streaming/data.py" = ["S105"]
+"src/meridian_storage/streaming/errors.py" = ["N818"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["meridian_storage.streaming"]
+warn_unreachable = true
+show_error_codes = true
+
+[tool.bandit]
+targets = ["src"]
+exclude_dirs = ["tests"]
+skips = []

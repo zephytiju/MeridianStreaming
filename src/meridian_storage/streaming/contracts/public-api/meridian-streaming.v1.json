@@ -1,0 +1,43 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0",
+  "catalog": "streaming",
+  "data": ["Cursor", "Delivery", "DeliveryToken", "Event", "Position", "PublishReceipt", "RangePage"],
+  "defaultDelivery": "at-least-once",
+  "distribution": "meridian-storage-streaming",
+  "errorCodes": [
+    "MERIDIAN_STREAMING_ACKNOWLEDGEMENT_CONFLICT",
+    "MERIDIAN_STREAMING_CAPABILITY_MISMATCH",
+    "MERIDIAN_STREAMING_CURSOR_EXPIRED",
+    "MERIDIAN_STREAMING_CURSOR_INVALID",
+    "MERIDIAN_STREAMING_DELIVERY_INVALID",
+    "MERIDIAN_STREAMING_DELIVERY_TIMEOUT",
+    "MERIDIAN_STREAMING_EVENT_INVALID",
+    "MERIDIAN_STREAMING_GROUP_POSITION_CONFLICT",
+    "MERIDIAN_STREAMING_INVALID_DEFINITION",
+    "MERIDIAN_STREAMING_MIGRATION_REQUIRED",
+    "MERIDIAN_STREAMING_POLICY_DENIED",
+    "MERIDIAN_STREAMING_REBALANCE_CONFLICT",
+    "MERIDIAN_STREAMING_RESOURCE_NOT_FOUND",
+    "MERIDIAN_STREAMING_RETENTION_BOUNDARY",
+    "MERIDIAN_STREAMING_UNAVAILABLE"
+  ],
+  "explicitOperations": {
+    "meridian.streaming.group-position": "1.0.0",
+    "meridian.streaming.replay": "1.0.0"
+  },
+  "expressionMethods": [
+    "acknowledge",
+    "create_resource",
+    "negative_acknowledge",
+    "poll",
+    "publish",
+    "publish_batch",
+    "publish_schema",
+    "read_range",
+    "subscribe"
+  ],
+  "formatVersion": "meridian-streaming-public-api.v1",
+  "ordering": "per-logical-partition",
+  "resources": ["ConsumerGroup", "Stream", "Subscription"],
+  "version": "1.0.0"
+}

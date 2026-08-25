@@ -1,0 +1,10 @@
+{
+  "events": [],
+  "nextCursor": {
+    "formatVersion": "meridian.streaming.cursor.v1",
+    "value": "opaque-next",
+    "resource": {"catalog": "streaming", "namespace": "orders", "name": "events"},
+    "expiresAt": null
+  },
+  "truncated": false
+}
