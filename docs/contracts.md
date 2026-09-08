@@ -45,8 +45,10 @@ decoder. All timestamp serialization is UTC RFC 3339 with microseconds.
 
 ## Compatibility
 
-`compatibility.json` pins Core and Semantics 1.0.0, their wheel and source
-digests, their public-contract commits, Python >=3.12, and design revisions
-56/70. A release that changes a serialized field, registered method, stable
-error code, guarantee, or explicit Operation contract requires semantic-version
-compatibility review.
+`compatibility.json` records the exact public Core 1.1.0 / Semantics 2.0.1
+validation recipe, artifact hashes and commits. Its `requires` fields describe
+the package metadata bounds; the exact versions are conformance evidence, not
+runtime acceptance gates. Historical design revisions record the V1 origin.
+A release that changes a serialized field, registered method, stable error code,
+guarantee, or explicit Operation contract requires semantic-version review.
+See [Compatibility migration](compatibility.md) for dependency and test scope.

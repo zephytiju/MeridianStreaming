@@ -20,13 +20,15 @@ or lifecycle authority.
 ## Install
 
 ```console
-python -m pip install meridian-storage-streaming==1.0.0
+python -m pip install meridian-storage-streaming==1.0.1
 ```
 
-Python 3.12 or newer is required. The release pins the published
-`meridian-storage-core==1.0.0` and `meridian-storage-semantics==1.0.0`
-contracts exactly; their wheel and source-distribution digests are recorded in
-[`compatibility.json`](src/meridian_storage/streaming/compatibility.json).
+Python 3.12 or newer is required. Runtime dependencies admit Core `>=1.1.0,<2`
+and Semantics `>=2.0.1,<3`. The exact tested Core 1.1.0 / Semantics 2.0.1 recipe
+and public artifact hashes live in
+[`compatibility.json`](src/meridian_storage/streaming/compatibility.json) and
+[`requirements-audit.txt`](requirements-audit.txt). These are validation evidence;
+the deployment owns its exact release lock. See the [migration rationale](docs/compatibility.md).
 
 ## Mapping-first public interface
 
@@ -115,8 +117,9 @@ logical references and fingerprints.
 
 ## Design and security boundary
 
-The implementation is pinned to Meridian HLD revision 56 and Meridian Catalogs
-and Public Interfaces revision 70. Deployment IaC selects, provisions, secures,
+The V1 contracts originated in Meridian HLD revision 56 and Meridian Catalogs
+and Public Interfaces revision 70. Release 1.0.1 applies the approved public
+dependency compatibility repair without changing those Streaming contracts. Deployment IaC selects, provisions, secures,
 backs up, migrates, and owns concrete Engines. Core resolves Bindings and
 enforces OperationContext scope. This package accepts no endpoint, credential,
 physical-resource name, deployment state, or engine-native expression.

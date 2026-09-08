@@ -93,7 +93,7 @@ def test_model_documents_validate_against_released_schemas(
 
 
 @pytest.mark.contract
-def test_public_and_compatibility_ledgers_are_pinned() -> None:
+def test_public_contract_and_validation_recipe_are_versioned() -> None:
     public = public_api_contract()
     compatibility = compatibility_contract()
     assert public["formatVersion"] == "meridian-streaming-public-api.v1"
@@ -109,8 +109,8 @@ def test_public_and_compatibility_ledgers_are_pinned() -> None:
         "subscribe",
     ]
     assert compatibility["design"] == {"catalogsRevision": 70, "hldRevision": 56}
-    assert compatibility["core"]["version"] == "1.0.0"  # type: ignore[index]
-    assert compatibility["semantics"]["version"] == "1.0.0"  # type: ignore[index]
+    assert compatibility["core"]["version"] == "1.1.0"  # type: ignore[index]
+    assert compatibility["semantics"]["version"] == "2.0.1"  # type: ignore[index]
     assert contract_document("meridian.streaming.data.v1.schema.json")["title"]
     with pytest.raises(ValueError):
         contract_document("../compatibility.json")

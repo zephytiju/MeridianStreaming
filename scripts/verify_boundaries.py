@@ -19,10 +19,12 @@ def verify_distribution() -> None:
     if project["name"] != "meridian-storage-streaming":
         raise AssertionError("repository must publish only meridian-storage-streaming")
     if project["dependencies"] != [
-        "meridian-storage-core==1.0.0",
-        "meridian-storage-semantics==1.0.0",
+        "meridian-storage-core>=1.1.0,<2",
+        "meridian-storage-semantics>=2.0.1,<3",
     ]:
-        raise AssertionError("runtime dependencies must be the two exact released contracts")
+        raise AssertionError(
+            "runtime dependencies must be the two declared public API compatibility ranges"
+        )
     namespace = ROOT / "src/meridian_storage"
     if (namespace / "__init__.py").exists():
         raise AssertionError("distribution must not compete for the PEP 420 namespace root")

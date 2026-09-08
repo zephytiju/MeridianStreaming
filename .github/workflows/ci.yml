@@ -29,8 +29,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install exact test environment
-        run: python -m pip install --disable-pip-version-check -e '.[test]'
+      - name: Install validation lock and test environment
+        run: |
+          python -m pip install --require-hashes -r requirements-audit.txt
+          python -m pip install --disable-pip-version-check -e '.[test]'
+          python -m pip check
       - name: Verify formatting
         run: ruff format --check src tests scripts
       - name: Lint
@@ -39,8 +42,8 @@ jobs:
         run: python -m mypy src
       - name: Verify serialized contracts
         run: |
-          python scripts/verify_contracts.py
-          python scripts/verify_release_tag.py v1.0.0
+          python scripts/verify_contracts.py --locked
+          python scripts/verify_release_tag.py v1.0.1
       - name: Verify repository boundaries
         run: python scripts/verify_boundaries.py
       - name: Run unit, contract, conformance, packaging, and lifecycle tests
@@ -61,6 +64,14 @@ jobs:
         run: python -m build
       - name: Inspect release artifacts
         run: python scripts/verify_artifacts.py dist/*
+      - name: Verify clean installed wheel with public Core 1.1.0
+        run: |
+          python -m venv "${RUNNER_TEMP}/streaming-wheel"
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -m pip install --require-hashes -r requirements-audit.txt
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -m pip install dist/*.whl pytest==8.4.1 jsonschema==4.25.1
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -m pip check
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -I -c 'from meridian_storage import streaming; assert "site-packages" in streaming.__file__'
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -I -m pytest tests
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -88,9 +99,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install released runtime pins and compatibility test requirements
+      - name: Install public compatible dependencies and compatibility test requirements
         run: >-
           python -m pip install --disable-pip-version-check
           . pytest==8.4.1 jsonschema==4.25.1
       - name: Run compatibility suite
-        run: pytest
+        run: |
+          python -m pip check
+          pytest
