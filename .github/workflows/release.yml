@@ -23,13 +23,16 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install release tooling
-        run: python -m pip install --disable-pip-version-check -e '.[test]'
+        run: |
+          python -m pip install --require-hashes -r requirements-audit.txt
+          python -m pip install --disable-pip-version-check -e '.[test]'
+          python -m pip check
       - name: Run complete release gate
         run: |
           ruff format --check src tests scripts
           ruff check src tests scripts
           python -m mypy src
-          python scripts/verify_contracts.py
+          python scripts/verify_contracts.py --locked
           python scripts/verify_release_tag.py "${GITHUB_REF_NAME}"
           python scripts/verify_boundaries.py
           pytest --cov=meridian_storage.streaming --cov-report=term-missing
@@ -41,14 +44,22 @@ jobs:
         run: |
           python -m build --outdir dist/packages
           python -m build --outdir dist-second
-          cmp dist/packages/meridian_storage_streaming-1.0.0-py3-none-any.whl dist-second/meridian_storage_streaming-1.0.0-py3-none-any.whl
-          cmp dist/packages/meridian_storage_streaming-1.0.0.tar.gz dist-second/meridian_storage_streaming-1.0.0.tar.gz
+          cmp dist/packages/meridian_storage_streaming-1.0.1-py3-none-any.whl dist-second/meridian_storage_streaming-1.0.1-py3-none-any.whl
+          cmp dist/packages/meridian_storage_streaming-1.0.1.tar.gz dist-second/meridian_storage_streaming-1.0.1.tar.gz
       - name: Verify artifacts and create evidence
         run: |
           python scripts/verify_artifacts.py dist/packages/*
           python scripts/generate_conformance_evidence.py --output dist/evidence/conformance-report.json
-          python scripts/generate_sbom.py --output dist/evidence/meridian-storage-streaming-1.0.0.spdx.json
+          python scripts/generate_sbom.py --output dist/evidence/meridian-storage-streaming-1.0.1.spdx.json
           sha256sum dist/packages/* > dist/evidence/SHA256SUMS
+      - name: Verify clean installed wheel with public Core 1.1.0
+        run: |
+          python -m venv "${RUNNER_TEMP}/streaming-wheel"
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -m pip install --require-hashes -r requirements-audit.txt
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -m pip install dist/packages/*.whl pytest==8.4.1 jsonschema==4.25.1
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -m pip check
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -I -c 'from meridian_storage import streaming; assert "site-packages" in streaming.__file__'
+          "${RUNNER_TEMP}/streaming-wheel/bin/python" -I -m pytest tests
       - name: Upload immutable release bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -83,7 +94,7 @@ jobs:
           subject-path: |
             dist/packages/*.whl
             dist/packages/*.tar.gz
-          sbom-path: dist/evidence/meridian-storage-streaming-1.0.0.spdx.json
+          sbom-path: dist/evidence/meridian-storage-streaming-1.0.1.spdx.json
 
   publish:
     name: Publish to PyPI

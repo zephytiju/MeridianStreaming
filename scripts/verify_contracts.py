@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import argparse
+import importlib.metadata
 import json
 import re
 import tomllib
@@ -10,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
+from packaging.requirements import Requirement
 
 from meridian_storage.runtime.operations import REGISTERED_CATALOG_METHODS
 from meridian_storage.streaming import (
@@ -66,17 +69,35 @@ def verify_public_surface() -> None:
         raise AssertionError("provider manifest identity is invalid")
 
 
-def verify_compatibility() -> None:
+def verify_compatibility(*, locked: bool = False) -> None:
     contract = compatibility_contract()
     if contract["design"] != {"catalogsRevision": 70, "hldRevision": 56}:
         raise AssertionError("design pins do not match the locked baseline")
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    requirements = {req.name: req for req in map(Requirement, project["dependencies"])}
+    lock = (ROOT / "requirements-audit.txt").read_text(encoding="utf-8")
     for dependency in ("core", "semantics"):
         entry = contract[dependency]
-        if entry["version"] != "1.0.0":
-            raise AssertionError(f"{dependency} is not pinned to 1.0.0")
+        requirement = requirements[entry["distribution"]]
+        if (
+            requirement.specifier
+            != Requirement(entry["distribution"] + entry["requires"]).specifier
+        ):
+            raise AssertionError(f"{dependency} dependency metadata differs from its ledger")
+        if entry["version"] not in requirement.specifier:
+            raise AssertionError(f"{dependency} validation release is outside its API range")
+        if f"{entry['distribution']}=={entry['version']}" not in lock:
+            raise AssertionError(f"{dependency} validation lock differs from its ledger")
+        installed = importlib.metadata.version(entry["distribution"])
+        if installed not in requirement.specifier:
+            raise AssertionError(f"{dependency} installed release violates package metadata")
+        if locked and installed != entry["version"]:
+            raise AssertionError(f"{dependency} installed release differs from validation lock")
         for field in ("sdistSha256", "wheelSha256"):
             if SHA256.fullmatch(entry[field]) is None:
                 raise AssertionError(f"{dependency}.{field} is not a SHA-256 digest")
+            if f"--hash=sha256:{entry[field]}" not in lock:
+                raise AssertionError(f"{dependency}.{field} differs from validation lock")
         if COMMIT.fullmatch(entry["publicContractCommit"]) is None:
             raise AssertionError(f"{dependency} public contract commit is invalid")
 
@@ -86,7 +107,7 @@ def verify_distribution_identity() -> None:
     public = public_api_contract()
     compatibility = compatibility_contract()
     versions = {project["version"], public["version"], compatibility["version"], __version__}
-    if versions != {"1.0.0"}:
+    if versions != {"1.0.1"}:
         raise AssertionError(f"distribution versions are inconsistent: {versions!r}")
     if {
         project["name"],
@@ -97,9 +118,12 @@ def verify_distribution_identity() -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--locked", action="store_true")
+    arguments = parser.parse_args()
     verify_schemas_and_fixtures()
     verify_public_surface()
-    verify_compatibility()
+    verify_compatibility(locked=arguments.locked)
     verify_distribution_identity()
     print("streaming contracts verified")
 

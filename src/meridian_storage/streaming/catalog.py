@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Core 1.0.0 provider for the mapping-first Streaming Catalog surface."""
+"""Core V1 provider for the mapping-first Streaming Catalog surface."""
 
 from __future__ import annotations
 

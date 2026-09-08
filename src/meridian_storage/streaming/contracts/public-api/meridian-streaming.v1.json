@@ -39,5 +39,5 @@
   "formatVersion": "meridian-streaming-public-api.v1",
   "ordering": "per-logical-partition",
   "resources": ["ConsumerGroup", "Stream", "Subscription"],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

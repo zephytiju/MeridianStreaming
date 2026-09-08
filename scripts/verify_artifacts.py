@@ -15,15 +15,17 @@ def _wheel(path: Path) -> None:
         names = archive.namelist()
         metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
         metadata = email.message_from_bytes(archive.read(metadata_name))
-        if metadata["Name"] != "meridian-storage-streaming" or metadata["Version"] != "1.0.0":
+        if metadata["Name"] != "meridian-storage-streaming" or metadata["Version"] != "1.0.1":
             raise AssertionError("wheel name or version is incorrect")
         if metadata["License-Expression"] != "Apache-2.0":
             raise AssertionError("wheel lacks the Apache-2.0 SPDX license expression")
         if metadata.get_all("Requires-Dist")[:2] != [
-            "meridian-storage-core==1.0.0",
-            "meridian-storage-semantics==1.0.0",
+            "meridian-storage-core<2,>=1.1.0",
+            "meridian-storage-semantics<3,>=2.0.1",
         ]:
-            raise AssertionError("wheel runtime dependencies are not exact compatibility pins")
+            raise AssertionError(
+                "wheel runtime dependencies are not the declared public API compatibility ranges"
+            )
         modules = {
             PurePosixPath(name).parts[1]
             for name in names
@@ -34,9 +36,9 @@ def _wheel(path: Path) -> None:
         if "meridian_storage/__init__.py" in names:
             raise AssertionError("wheel competes for the shared namespace root")
         required = {
-            "meridian_storage_streaming-1.0.0.dist-info/licenses/LICENSE",
-            "meridian_storage_streaming-1.0.0.dist-info/licenses/NOTICE",
-            "meridian_storage_streaming-1.0.0.dist-info/entry_points.txt",
+            "meridian_storage_streaming-1.0.1.dist-info/licenses/LICENSE",
+            "meridian_storage_streaming-1.0.1.dist-info/licenses/NOTICE",
+            "meridian_storage_streaming-1.0.1.dist-info/entry_points.txt",
             "meridian_storage/streaming/py.typed",
             "meridian_storage/streaming/compatibility.json",
         }
@@ -45,7 +47,7 @@ def _wheel(path: Path) -> None:
                 f"wheel is missing required files: {sorted(required - set(names))!r}"
             )
         entry_points = archive.read(
-            "meridian_storage_streaming-1.0.0.dist-info/entry_points.txt"
+            "meridian_storage_streaming-1.0.1.dist-info/entry_points.txt"
         ).decode("utf-8")
         if (
             "streaming = meridian_storage.streaming.catalog:StreamingCatalogProvider"
@@ -58,8 +60,8 @@ def _sdist(path: Path) -> None:
     with tarfile.open(path, "r:gz") as archive:
         names = archive.getnames()
         if not all(
-            name == "meridian_storage_streaming-1.0.0"
-            or name.startswith("meridian_storage_streaming-1.0.0/")
+            name == "meridian_storage_streaming-1.0.1"
+            or name.startswith("meridian_storage_streaming-1.0.1/")
             for name in names
         ):
             raise AssertionError("sdist contains a path outside its release root")
